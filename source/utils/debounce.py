@@ -48,6 +48,7 @@ def _executeDelayedCall(func: Callable[..., Any], state: _DebounceState) -> None
 	args = state.pendingArgs
 	kwargs = state.pendingKwargs
 	func(*args, **kwargs)
+	state.lastCallTimeMs = monotonic() * 1000
 	state.pendingArgs = ()
 	state.pendingKwargs = {}
 	state.pendingHandle = None
