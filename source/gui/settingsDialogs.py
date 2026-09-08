@@ -81,7 +81,7 @@ from config.configFlags import (
 from logHandler import log
 from synthDriverHandler import SynthDriver, changeVoice, getSynth, getSynthList, setSynth
 from utils import mmdevice
-from utils.debounce import debounceLimiter
+from utils.debounce import PREVENT_THREE_HZ_FLASH_MS, debounceLimiter
 from utils.displayString import DisplayStringEnum
 from utils.security import isRunningOnSecureDesktop
 from vision.providerBase import VisionEnhancementProviderSettings
@@ -6169,11 +6169,8 @@ class MagnifierPanel(SettingsPanel):
 	helpId = "MagnifierSettingsCategory"
 
 	@debounceLimiter(
-		# Rapidly changing magnifier settings can cause seizures.
-		# Ensure we don't apply changes more than 3 times per second to avoid triggering seizures.
-		# WCAG Three Flashes rule.
-		cooldownTimeMs=400,
-		delayTimeMs=350,
+		cooldownTimeMs=PREVENT_THREE_HZ_FLASH_MS,
+		delayTimeMs=PREVENT_THREE_HZ_FLASH_MS,
 	)
 	def _applyCurrentSettingsToConfigAndRuntime(self):
 		"""Apply current control values to config and to the active magnifier instance."""

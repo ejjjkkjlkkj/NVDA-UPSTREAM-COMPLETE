@@ -15,6 +15,12 @@ import wx
 
 P = ParamSpec("P")
 
+PREVENT_THREE_HZ_FLASH_MS = 334
+"""
+Ensure we don't apply visual changes more than 3 times per second to avoid triggering seizures.
+WCAG Three Flashes rule.
+"""
+
 
 @dataclass
 class _DebounceState:

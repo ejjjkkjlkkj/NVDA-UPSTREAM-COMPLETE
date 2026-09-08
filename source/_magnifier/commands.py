@@ -14,7 +14,7 @@ from typing import Literal
 import speech
 import ui
 from logHandler import log
-from utils.debounce import debounceLimiter
+from utils.debounce import PREVENT_THREE_HZ_FLASH_MS, debounceLimiter
 
 from . import changeMagnifiedView, getMagnifier, start, stop
 from .config import (
@@ -174,11 +174,8 @@ def moveMouseToView() -> None:
 
 
 @debounceLimiter(
-	# Rapidly shifting colour filters can cause seizures.
-	# Ensure we don't flash more than 3 times per second.
-	# WCAG Three Flashes rule.
-	cooldownTimeMs=400,
-	delayTimeMs=350,
+	cooldownTimeMs=PREVENT_THREE_HZ_FLASH_MS,
+	delayTimeMs=PREVENT_THREE_HZ_FLASH_MS,
 )
 def toggleFilter() -> None:
 	"""Cycle through color filters"""
