@@ -176,7 +176,7 @@ def moveMouseToView() -> None:
 @debounceLimiter(
 	# Rapidly shifting colour filters can cause seizures.
 	# Ensure we don't flash more than 3 times per second.
-	# WCAG Three Flashes (Level AAA).
+	# WCAG Three Flashes rule.
 	cooldownTimeMs=400,
 	delayTimeMs=350,
 )

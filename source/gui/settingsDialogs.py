@@ -10,7 +10,7 @@
 # This file may be used under the terms of the GNU General Public License, version 2 or later, as modified by the NVDA license.
 # For full terms and any additional permissions, see the NVDA license file: https://github.com/nvaccess/nvda/blob/master/copying.txt
 
-import copy  # noqa: I001
+import copy
 import logging
 import math
 import os
@@ -23,6 +23,8 @@ from typing import (
 	Any,
 )
 
+import _magnifier.config as magnifierConfig
+import api
 import audio
 import audioDucking
 import braille
@@ -38,32 +40,29 @@ import installer
 import keyboardHandler
 import languageHandler
 import logHandler
-from _magnifier import getMagnifier
-from _magnifier.commands import toggleMagnifier
-import _magnifier.config as magnifierConfig
-from _magnifier.utils.types import Filter, FullScreenMode, MagnifierTrackingType
-from _magnifier.fullscreenMagnifier import FullScreenMagnifier
 import queueHandler
 import requests
+import screenCurtain
+import screenCurtain._screenCurtain
 import speech
 import speechDictHandler
 import systemUtils
+import ui
 import vision
 import vision.providerBase
 import vision.providerInfo
 import winUser
 import wx
-from wx.lib import scrolledpanel
-
-import screenCurtain._screenCurtain
-from utils import mmdevice
-from utils.security import isRunningOnSecureDesktop
-from vision.providerBase import VisionEnhancementProviderSettings
-from wx.lib.expando import ExpandoTextCtrl
 import wx.lib.newevent
+from _magnifier import getMagnifier
+from _magnifier.commands import toggleMagnifier
+from _magnifier.fullscreenMagnifier import FullScreenMagnifier
+from _magnifier.utils.types import Filter, FullScreenMode, MagnifierTrackingType
 from addonStore.models.channel import UpdateChannel
 from config.configFlags import (
 	AddonsAutomaticUpdate,
+	BrailleMode,
+	LoggingLevel,
 	NVDAKey,
 	OutputMode,
 	ParagraphStartMarker,
@@ -78,19 +77,21 @@ from config.configFlags import (
 	ShowMessages,
 	TetherTo,
 	TypingEcho,
-	LoggingLevel,
-	BrailleMode,
 )
 from logHandler import log
 from synthDriverHandler import SynthDriver, changeVoice, getSynth, getSynthList, setSynth
+from utils import mmdevice
+from utils.debounce import debounceLimiter
 from utils.displayString import DisplayStringEnum
+from utils.security import isRunningOnSecureDesktop
+from vision.providerBase import VisionEnhancementProviderSettings
+from wx.lib import scrolledpanel
+from wx.lib.expando import ExpandoTextCtrl
 
 import gui
 import gui.contextHelp
 import gui.message
-import screenCurtain
-import api
-import ui
+
 from . import guiHelper
 
 try:
@@ -6167,6 +6168,13 @@ class MagnifierPanel(SettingsPanel):
 	title = _("Magnifier")
 	helpId = "MagnifierSettingsCategory"
 
+	@debounceLimiter(
+		# Rapidly changing magnifier settings can cause seizures.
+		# Ensure we don't apply changes more than 3 times per second to avoid triggering seizures.
+		# WCAG Three Flashes rule.
+		cooldownTimeMs=400,
+		delayTimeMs=350,
+	)
 	def _applyCurrentSettingsToConfigAndRuntime(self):
 		"""Apply current control values to config and to the active magnifier instance."""
 		selectedZoom = self.zoomCtrl.GetValue()
