@@ -6174,6 +6174,8 @@ class MagnifierPanel(SettingsPanel):
 	)
 	def _applyCurrentSettingsToConfigAndRuntime(self):
 		"""Apply current control values to config and to the active magnifier instance."""
+		if not self:
+			return
 		selectedZoom = self.zoomCtrl.GetValue()
 		selectedPanStep = self.panSpinCtrl.GetValue()
 		selectedFilter = list(Filter)[self.filterList.GetSelection()]
