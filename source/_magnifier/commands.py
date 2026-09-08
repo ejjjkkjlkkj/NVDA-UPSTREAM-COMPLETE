@@ -8,33 +8,36 @@ Keyboard commands for the magnifier module.
 Contains the command functions and their logic for keyboard shortcuts.
 """
 
-from collections.abc import Callable  # noqa: I001
+from collections.abc import Callable
 from typing import Literal
+
 import speech
 import ui
+from logHandler import log
+from utils.debounce import debounceLimiter
+
 from . import changeMagnifiedView, getMagnifier, start, stop
 from .config import (
-	setMagnifiedView,
+	ZoomLevel,
+	_isDebug,
 	getFollowState,
 	setFilter,
 	setFollowState,
 	setFullscreenMode,
+	setMagnifiedView,
 	toggleAllFollowStates,
-	ZoomLevel,
-	_isDebug,
 )
-from .magnifier import Magnifier
 from .fullscreenMagnifier import FullScreenMagnifier
+from .magnifier import Magnifier
 from .utils.errorHandling import MagnifierStartError
 from .utils.types import (
-	Filter,
 	Direction,
-	MagnifiedView,
+	Filter,
 	FullScreenMode,
+	MagnifiedView,
 	MagnifierAction,
 	MagnifierTrackingType,
 )
-from logHandler import log
 
 PAN_ACTION_TO_EDGE_MESSAGES = {
 	MagnifierAction.PAN_LEFT: pgettext(
@@ -170,6 +173,13 @@ def moveMouseToView() -> None:
 		magnifier.moveMouseToViewCenter()
 
 
+@debounceLimiter(
+	# Rapidly shifting colour filters can cause seizures.
+	# Ensure we don't flash more than 3 times per second.
+	# WCAG Three Flashes (Level AAA).
+	cooldownTimeMs=400,
+	delayTimeMs=350,
+)
 def toggleFilter() -> None:
 	"""Cycle through color filters"""
 	magnifier: Magnifier = getMagnifier()
